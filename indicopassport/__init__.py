@@ -2,15 +2,26 @@
 
 from webassets import Bundle
 import os
+from MaKaC.common.indexes import Index, IndexesHolder
+from MaKaC.conference import ConferenceHolder
+from indico.core.db import DBMgr
 
 from indico.core.plugins import IndicoPlugin, IndicoPluginBlueprint
 from indico.core import signals
-from MaKaC.registration import GeneralField, GeneralSectionForm
+from MaKaC.registration import GeneralField, GeneralSectionForm, TextInput, DateInput, CountryInput
 from MaKaC.webinterface.pages.registrationForm import WPConfModifRegFormPreview, \
     WPRegistrationFormModify, WPRegistrationFormDisplay
 from MaKaC.services.interface.rpc.handlers import importModule, endpointMap
+import indicopassport.registrant
 
 blueprint = IndicoPluginBlueprint('indicopassport', __name__)
+
+
+def addIndex(self,name,index):
+    DBMgr.getInstance().startRequest()
+    self._IndexesHolder__allowedIdxs.append(name)
+    self._getIdx()["registrants"] = RegistrantIndex()
+    DBMgr.getInstance().commit()
 
 
 class IndicoPassportPlugin(IndicoPlugin):
@@ -30,6 +41,8 @@ class IndicoPassportPlugin(IndicoPlugin):
         self.connect(signals.event.created,self.conf_created)
 
         endpointMap["passport"]=importModule("indicopassport.services.passport")
+        IndexesHolder.addIndex = addIndex
+        IndexesHolder().addIndex("registrants",RegistrantIndex())
 
     def register_assets(self):
         self.register_js_bundle('indicopassport_js', 'js/indicopassport.js')
@@ -46,15 +59,17 @@ class IndicoPassportPlugin(IndicoPlugin):
 
         for (orig,content) in contents:
             shutil.copy2(content,dirName)
-        print "Done"
-        #bundle.build(self.assets,force=False,disable_cache=True)
-        #self.assets.register(name, bundle)
 
     def get_blueprints(self):
         return blueprint
 
     @signals.app_created.connect
     def _config(app, **kwargs):
+        #test = IndexesHolder().getById("registrants")
+        #reg = ConferenceHolder().getById(20).getRegistrantById(0)
+        #test.index(reg)
+        #reg1 = test.match(reg.getPassportInfo())
+        #print test
         pass
 
     def conf_created(self,conf,parent):
@@ -74,6 +89,7 @@ class IndicoPassportPlugin(IndicoPlugin):
             },
             {
                 "input": "date",
+                "dateFormat": "%d/%m/%Y",
                 "disabled": False,
                 "caption": "Passport Expire",
                 "mandatory": True
@@ -95,3 +111,53 @@ class IndicoPassportPlugin(IndicoPlugin):
 
         print "Section ID is %s" % section.getId()
 
+class RegistrantIndex(Index):
+    _name = "registrants"
+
+    def getLocator(self,registrant):
+        return {
+            'confId': registrant.getConference().getId(),
+            'registrantId': registrant.getId()
+        }
+
+    def index(self, registrant):
+        passInfo = registrant.getPassportInfo()
+        if passInfo:
+            locator = self.getLocator(registrant)
+            self._addItem(passInfo, locator)
+
+    def unindex(self, registrant):
+        passInfo = registrant.getPassportInfo()
+        if passInfo:
+            locator = self.getLocator(registrant)
+            self._withdrawItem(passInfo, locator)
+
+    def match(self, passportID, passportExpire, passportOrigin, cs=0, exact=0, accent_sensitive=True):
+        """this match is an approximative case insensitive match"""
+
+        passportInfo = "{}-{}-{}".format(passportID,passportExpire,passportOrigin)
+        locator = self._match(passportInfo, cs, exact)
+        registrant = ConferenceHolder().getById(locator['confId']).getRegistrantById(locator['registrantId'])
+        return registrant
+
+def decorateSetValue(fn):
+    def new_funct(*args, **kwargs):
+        ret = fn(*args, **kwargs)
+        self = args[0]
+        item = args[1]
+        params = args[2]
+        registrant = args[3]
+        caption = item.getGeneralField().getCaption()
+        value = item.getValue()
+        if caption=='Passport ID':
+            registrant.setPassportID(value,item)
+        elif caption=='Passport Origin':
+            registrant.setPassportOrigin(value,item)
+        elif caption=='Passport Expire':
+            registrant.setPassportExpire(value,item)
+        return ret
+    return new_funct
+
+TextInput._setResponseValue = decorateSetValue(TextInput._setResponseValue)
+DateInput._setResponseValue = decorateSetValue(DateInput._setResponseValue)
+CountryInput._setResponseValue = decorateSetValue(CountryInput._setResponseValue)

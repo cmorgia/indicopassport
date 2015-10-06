@@ -14,14 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Indico; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+from MaKaC.user import AvatarHolder
 from indico.core.config import Config
-import time
 
 from MaKaC.services.implementation.base import ServiceBase
-import urllib
-from MaKaC.ecosoclist import ECOSOCList
-from user import AvatarHolder
 from iso3166 import countries
 
 class Redirect(ServiceBase):
