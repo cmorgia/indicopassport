@@ -12,16 +12,19 @@ from MaKaC.registration import GeneralField, GeneralSectionForm, TextInput, Date
 from MaKaC.webinterface.pages.registrationForm import WPConfModifRegFormPreview, \
     WPRegistrationFormModify, WPRegistrationFormDisplay
 from MaKaC.services.interface.rpc.handlers import importModule, endpointMap
+from indico.web.http_api.hooks.registration import RegistrantFetcher
 import indicopassport.registrant
+from indicopassport.fossils import IRegFormRegistrantPassportFossil
 
 blueprint = IndicoPluginBlueprint('indicopassport', __name__)
 
 
 def addIndex(self,name,index):
-    DBMgr.getInstance().startRequest()
-    self._IndexesHolder__allowedIdxs.append(name)
-    self._getIdx()["registrants"] = RegistrantIndex()
-    DBMgr.getInstance().commit()
+    if not name in self._IndexesHolder__allowedIdxs:
+        DBMgr.getInstance().startRequest()
+        self._IndexesHolder__allowedIdxs.append(name)
+        self._getIdx()["registrants"] = RegistrantIndex()
+        DBMgr.getInstance().commit()
 
 
 class IndicoPassportPlugin(IndicoPlugin):
@@ -44,6 +47,8 @@ class IndicoPassportPlugin(IndicoPlugin):
         IndexesHolder.addIndex = addIndex
         IndexesHolder().addIndex("registrants",RegistrantIndex())
 
+        RegistrantFetcher.DETAIL_INTERFACES["passport"]= IRegFormRegistrantPassportFossil
+
     def register_assets(self):
         self.register_js_bundle('indicopassport_js', 'js/indicopassport.js')
         self.register_jars_bundle('indico_jars', 'jars/swipeapplet.jar','jars/mmmreader.jar')
@@ -65,11 +70,6 @@ class IndicoPassportPlugin(IndicoPlugin):
 
     @signals.app_created.connect
     def _config(app, **kwargs):
-        #test = IndexesHolder().getById("registrants")
-        #reg = ConferenceHolder().getById(20).getRegistrantById(0)
-        #test.index(reg)
-        #reg1 = test.match(reg.getPassportInfo())
-        #print test
         pass
 
     def conf_created(self,conf,parent):
