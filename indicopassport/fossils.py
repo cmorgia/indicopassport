@@ -21,7 +21,7 @@ class IPassportFossil(IFossil):
         """
         Get the passport expiration date
         """
-    getPassportExpire.produce = lambda x: x.getPassportExpire().date()
+    getPassportExpire.produce = lambda x: x.getPassportExpire().strftime('%d/%m/%Y')
 
 
     def getPassportOrigin(self):

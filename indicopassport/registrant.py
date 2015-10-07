@@ -28,7 +28,7 @@ def updateFromPassportScan(self, passport_info):
         from datetime import datetime
         from iso3166 import countries
 
-        passport_info['expirationDate'] = datetime.strptime(passport_info['expirationDate'], '%y%m%d').strftime('%d/%m/%Y')
+        passport_info['expirationDate'] = datetime.strptime(passport_info['expirationDate'], '%y%m%d')
         passport_info['dayOfBirth'] = datetime.strptime(passport_info['dayOfBirth'], '%y%m%d').strftime('%d/%m/%Y')
 
         passport_info['countryCode']=countries.get(passport_info['countryCode']).alpha2
@@ -47,7 +47,7 @@ def updateFromPassportScan(self, passport_info):
         self.updateValues(passport_info)
 
 Registrant.updateFromPassportScan = updateFromPassportScan
-
+Registrant.updateValues = updateValues
 
 def setPassportID(self,value,item=None):
     index = IndexesHolder().getById("registrants")

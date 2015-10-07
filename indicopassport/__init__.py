@@ -15,6 +15,7 @@ from MaKaC.services.interface.rpc.handlers import importModule, endpointMap
 from indico.web.http_api.hooks.registration import RegistrantFetcher
 import indicopassport.registrant
 from indicopassport.fossils import IRegFormRegistrantPassportFossil
+import indicopassport.http_api.hooks
 
 blueprint = IndicoPluginBlueprint('indicopassport', __name__)
 
