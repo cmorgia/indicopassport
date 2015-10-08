@@ -11,7 +11,8 @@ ndRegForm.config(function($provide){
             var archive = appletJar+","+readerJar;
             return function(scope,elem,attrs) {
                 var name = scope.section.directives;
-                if (name=="nd-passport-section") {
+                var isSecurity = scope.$root.isSecurity;
+                if (isSecurity=="1" && name=="nd-passport-section") {
                     elem.append("<applet name=\"MyApplet\" code=swipeapplet.SwipeApplet.class " +
                         "codebase=\""+jarsBase+"\" archive=\"swipeapplet.jar,mmmreader.jar\"  style=\"width: 400px; height: 50px\">" +
                         "Browser Does not support Java </applet>");
