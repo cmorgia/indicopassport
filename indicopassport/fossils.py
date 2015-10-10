@@ -8,6 +8,7 @@ class IPassportFossil(IFossil):
         """
         Render the Personal data Form
         """
+    getPersonalData.name = "personal_data"
     getPersonalData.produce = lambda x: x.getConference().getRegistrationForm().getPersonalData().getRegistrantValues(x)
 
     def getPassportID(self):
