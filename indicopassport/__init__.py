@@ -4,6 +4,7 @@ from webassets import Bundle
 import os
 from MaKaC.common.indexes import Index, IndexesHolder
 from MaKaC.conference import ConferenceHolder
+from MaKaC.webinterface.pages.welcome import WPWelcome
 from indico.core.db import DBMgr
 
 from indico.core.plugins import IndicoPlugin, IndicoPluginBlueprint
@@ -41,6 +42,7 @@ class IndicoPassportPlugin(IndicoPlugin):
         self.inject_js('indicopassport_js', WPRegistrationFormDisplay)
         self.inject_js('indicopassport_js', WPRegistrationFormModify)
         self.inject_js('indicopassport_js', WPConfModifRegFormPreview)
+        self.inject_js('home_js',WPWelcome)
 
         self.connect(signals.event.created,self.conf_created)
 
@@ -52,6 +54,7 @@ class IndicoPassportPlugin(IndicoPlugin):
 
     def register_assets(self):
         self.register_js_bundle('indicopassport_js', 'js/indicopassport.js')
+        self.register_js_bundle('home_js', 'js/home.js')
         self.register_jars_bundle('indico_jars', 'jars/swipeapplet.jar','jars/mmmreader.jar')
 
     def register_jars_bundle(self, name, *files):
