@@ -55,19 +55,6 @@ class IndicoPassportPlugin(IndicoPlugin):
     def register_assets(self):
         self.register_js_bundle('indicopassport_js', 'js/indicopassport.js')
         self.register_js_bundle('home_js', 'js/home.js')
-        self.register_jars_bundle('indico_jars', 'jars/swipeapplet.jar','jars/mmmreader.jar')
-
-    def register_jars_bundle(self, name, *files):
-        import shutil
-        bundle = Bundle(*files, output='jars')
-        dirName = bundle.resolve_output(self.assets)
-        if os.path.isdir(dirName):
-            shutil.rmtree(dirName)
-        os.makedirs(dirName)
-        contents = bundle.resolve_contents(self.assets)
-
-        for (orig,content) in contents:
-            shutil.copy2(content,dirName)
 
     def get_blueprints(self):
         return blueprint
@@ -141,7 +128,10 @@ class RegistrantIndex(Index):
 
         passportInfo = "{}-{}-{}".format(passportID,passportExpire,passportOrigin)
         locator = self._match(passportInfo, cs, exact)
-        registrant = ConferenceHolder().getById(locator['confId']).getRegistrantById(locator['registrantId'])
+        if len(locator)>0:
+            registrant = ConferenceHolder().getById(locator['confId']).getRegistrantById(locator['registrantId'])
+        else:
+            registrant = None
         return registrant
 
 def decorateSetValue(fn):

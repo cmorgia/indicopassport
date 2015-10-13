@@ -25,9 +25,9 @@ class Redirect(ServiceBase):
 
     def _checkParams(self):
         ServiceBase._checkParams(self)
-        self.passportID = self._params['Passport ID'] if 'Passport ID' in self._params else None
-        self.passportExpire = self._params['Passport Expire'] if 'Passport Expire' in self._params else None
-        self.passportOrigin = self._params['Passport Origin'] if 'Passport Origin' in self._params else None
+        self.passportID = self._params['passportID'] if 'passportID' in self._params else None
+        self.passportExpire = self._params['passportExpire'] if 'passportExpire' in self._params else None
+        self.passportOrigin = self._params['passportOrigin'] if 'passportOrigin' in self._params else None
         self.passportOrigin = countries.get(self.passportOrigin).alpha2
 
     def _getAnswer(self):

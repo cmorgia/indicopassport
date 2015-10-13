@@ -1,31 +1,3 @@
-ndRegForm.config(function($provide){
-    $provide.decorator('ndSectionDirective',function($delegate){
-        var directive = $delegate[0];
-        var compile = directive.compile;
-        directive.compile = function(tElement,tAttrs) {
-            var link = compile.apply(this,arguments);
-            var base = Indico.Urls.Base;
-            var jarsBase = "/indico/static/assets/plugins/indicopassport/jars/";
-            var appletJar = jarsBase+"swipeapplet.jar";
-            var readerJar = jarsBase+"mmmreader.jar";
-            var archive = appletJar+","+readerJar;
-            return function(scope,elem,attrs) {
-                var name = scope.section.directives;
-                var isSecurity = scope.$root.isSecurity;
-                if (isSecurity=="1" && name=="nd-passport-section") {
-                    elem.append("<applet name=\"MyApplet\" code=swipeapplet.SwipeApplet.class " +
-                        "codebase=\""+jarsBase+"\" archive=\"swipeapplet.jar,mmmreader.jar\"  style=\"width: 400px; height: 50px\">" +
-                        "Browser Does not support Java </applet>");
-                }
-                link.apply(this,arguments);
-                //Extend link here if needed
-            };
-        };
-
-        return $delegate;
-    });
-});
-
 $.fn.xpathEvaluate = function (xpathExpression) {
     // NOTE: vars not declared local for debug purposes
     $this = this.first(); // Don't make me deal with multiples before coffee
@@ -48,34 +20,38 @@ function findElement(caption) {
     return element;
 }
 
-function readerdata(controlId) {
+function readerdata(payload) {
     var mapOfFields = {
-        "First Name":"GetGivenName",
-        "Last Name":"GetSurname",
-        "Birth Date":"GetDateOfBirth",
-        "Passport ID":"GetDocumentNumber",
-        "Passport Expire":"GetDateOfExpiry",
-        "Passport Origin":"GetIssuer"
+        "First Name":"firstName",
+        "Last Name":"lastName",
+        "Birth Date":"birthDate",
+        "Passport ID":"passportID",
+        "Passport Expire":"passportExpire",
+        "Passport Origin":"passportOrigin"
     };
-    if (controlId == "ocr") {
-        for (var key in mapOfFields) {
-            var element = findElement(key);
-            var methodName = mapOfFields[key];
-            var value = MyApplet[methodName]();
-            if (key=="Passport Origin") {
-                value = countryMap[value];
-            } else if (key=="Passport Expire") {
-                value = "20"+value;
-            } else if (key=="Birth Date") {
-                value = "20"+value;
-            }
+    for (var key in mapOfFields) {
+        var element = findElement(key);
 
-            element.val(value);
+        var fieldName = mapOfFields[key];
+        var value = payload[fieldName];
+        if (key=="Passport Origin") {
+            value = countryMap[value];
         }
-    } else {
-        console.log("Unsupported scanning method");
+
+        element.val(value);
     }
 }
+
+$(function(){
+    window.webSocket = new WebSocket("wss://127.0.0.1");
+    window.webSocket.onmessage = function(event) {
+        var payload = $.parseJSON(event.data);
+        readerdata(payload);
+    };
+    $( window ).unload(function() {
+        window.webSocket.close();
+    });
+});
 
 var countryMap = {
     'DZA': 'DZ',
